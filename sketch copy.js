@@ -262,23 +262,33 @@ function draw() {
 
   
   // Draw all apples with music-reactive color
-  for (let c of allCircles) {
-    // Create color interpolation
-    let from1 = color(...c.color1);
-    let to1 = color(...c.color2);
-    let lerped1 = lerpColor(from1, to1, t); // Interpolate based on energy
+for (let i = 0; i < allCircles.length; i++) {
+  let c = allCircles[i];
+  
+  //  Noise offset: Over time + independent random value for each apple
+  let n = noise(frameCount * 0.01 + i * 10);
 
-    let from2 = color(...c.color2);
-    let to2 = color(...c.color1);
-    let lerped2 = lerpColor(from2, to2, t);
+  // Music and noise fusion, dynamic adjustment of apple radius
+  let scale = 1 + 0.2 * n + 0.2 * t; // 20% 噪声 + 20% 音乐动态
 
-    // Draw two half-arcs for each apple
-    fill(lerped1);
-    arc(c.x, c.y, c.r * 2, c.r * 2, c.angle, c.angle + PI); // first half
+  let r = c.r * scale; // Adjusted radius
 
-    fill(lerped2);
-    arc(c.x, c.y, c.r * 2, c.r * 2, c.angle + PI, c.angle + TWO_PI); // second half
-  }
+  // Semicircle colour interpolation
+  let from1 = color(...c.color1);
+  let to1 = color(...c.color2);
+  let lerped1 = lerpColor(from1, to1, t);
+
+  let from2 = color(...c.color2);
+  let to2 = color(...c.color1);
+  let lerped2 = lerpColor(from2, to2, t);
+
+  fill(lerped1);
+  arc(c.x, c.y, r * 2, r * 2, c.angle, c.angle + PI);
+
+  fill(lerped2);
+  arc(c.x, c.y, r * 2, r * 2, c.angle + PI, c.angle + TWO_PI);
+}
+
 
   // Draw tree branch lines
   stroke(234, 204, 70);
