@@ -1,53 +1,49 @@
-let allCircles = [];  // Array to store all apple circles
-let lines = [];       // Array to store tree branch line segments
-let generateBtn;      // Button to generate apple tree
-let playBtn;          // Button to play/pause music
-let sound;            // Sound object
-let fft;              // Audio spectrum analyzer
+let allCircles = [];  
+let lines = [];       
+let generateBtn;      
+let playBtn;          
+let sound;            
+let fft;              
+let noiseScale = 0.02;  
+let noiseAmplitude = 10; // 放大噪声影响
 
 function preload() {
-  // Preload audio file
   sound = loadSound("/red_velvet_dumb_dumb.mp3");
 }
 
 function setup() {
-  // Create 600x800 canvas
   createCanvas(600, 800);
   drawBackground();
 
-  // Initialize tree branch line data
   lines = [
-    {x1: 0, y1: -340, x2: 0, y2: 0}, // trunk (top to bottom)
-    {x1: -120, y1: -250, x2: 130, y2: -250}, // main horizontal branch
-    {x1: -135, y1: -430, x2: -120, y2: -250}, // left main branch
-    {x1: 130, y1: -420, x2: 130, y2: -250}, // right main branch
-    {x1: -54, y1: -340, x2: 54, y2: -340}, // upper horizontal branch
-    {x1: -54, y1: -340, x2: -54, y2: -380}, // left small branch
-    {x1: 54, y1: -340, x2: 54, y2: -370}, // right small branch
-    {x1: -100, y1: 0, x2: 100, y2: 0}, // bottom base branch
-    {x1: -220, y1: -410, x2: -135, y2: -430}, // far left branch
-    {x1: 130, y1: -420, x2: 180, y2: -421}, // far right branch
-    {x1: 180, y1: -421, x2: 190, y2: -520}, // top rightmost branch
-    {x1: -220, y1: -410, x2: -220, y2: -440}, // top leftmost branch
+    {x1: 0, y1: -340, x2: 0, y2: 0},
+    {x1: -120, y1: -250, x2: 130, y2: -250},
+    {x1: -135, y1: -430, x2: -120, y2: -250},
+    {x1: 130, y1: -420, x2: 130, y2: -250},
+    {x1: -54, y1: -340, x2: 54, y2: -340},
+    {x1: -54, y1: -340, x2: -54, y2: -380},
+    {x1: 54, y1: -340, x2: 54, y2: -370},
+    {x1: -100, y1: 0, x2: 100, y2: 0},
+    {x1: -220, y1: -410, x2: -135, y2: -430},
+    {x1: 130, y1: -420, x2: 180, y2: -421},
+    {x1: 180, y1: -421, x2: 190, y2: -520},
+    {x1: -220, y1: -410, x2: -220, y2: -440},
   ];
-
-  // Create UI buttons
+ 
   generateBtn = createButton('🌲 Generate Apple Tree 🍎');
   generateBtn.position(80, 700);
-  generateBtn.mousePressed(drawApple); // Bind apple tree generation function
+  generateBtn.mousePressed(drawApple);
   styleButton(generateBtn);
 
   playBtn = createButton('▶️ Play/Pause Music');
   playBtn.position(350, 700);
-  playBtn.mousePressed(toggleSound); // Bind music control function
+  playBtn.mousePressed(toggleSound);
   styleButton(playBtn);
 
-  // Initialize audio FFT analyzer
   fft = new p5.FFT();
 }
 
 function styleButton(btn) {
-  // Set button visual styles
   btn.style('background-color', '#FFB6B9');
   btn.style('color', '#ffffff');
   btn.style('font-size', '16px');
@@ -58,55 +54,35 @@ function styleButton(btn) {
   btn.style('box-shadow', '2px 2px 8px rgba(0, 0, 0, 0.2)');
   btn.style('transition', 'all 0.3s ease-in-out');
   btn.style('font-family', 'Helvetica, sans-serif');
-  
-  // Set hover effect
   btn.mouseOver(() => btn.style('background-color', '#ff9aa2'));
   btn.mouseOut(() => btn.style('background-color', '#FFB6B9'));
 }
 
 function drawBackground() {
-  // Draw sky background
   background(199, 244, 255);
   noStroke();
-  
-  // Draw blue card-like background
   fill('#7E94BE');
   rect(37, 35, 525, 718, 20);
-
-  // Translate origin and draw ground and tree base
   push();
   translate(width / 2, height / 2 + 200);
-  
-  // Draw green ground
   fill('#65C18D');
   stroke('#373A7D');
   strokeWeight(2);
   rect(-262, 0, 523, 86);
-  
-  // Draw yellow tree base
   fill('#FFF28C');
   noStroke();
   rect(-115, 0, 225, 70);
   pop();
 }
 
-// Generate Apple Tree
 function drawApple() {
-  // Redraw background
   drawBackground();
-  // Clear existing apple array
   allCircles = [];
-
   push();
-  // Translate origin to lower center of canvas
   translate(width / 2, height / 2 + 200);
-  
-  // Generate apples on each line segment
   for (let lineSegment of lines) {
     drawCirclesOnLine(lineSegment.x1, lineSegment.y1, lineSegment.x2, lineSegment.y2, allCircles);
   }
-
-  // Draw tree branch lines
   stroke(234, 204, 70);
   strokeWeight(2);
   for (let lineSegment of lines) {
@@ -115,64 +91,46 @@ function drawApple() {
   pop();
 }
 
-// Generate Apple Circles on Lines
 function drawCirclesOnLine(x1, y1, x2, y2, allCircles) {
-  // Calculate line length and direction vector
   let len = dist(x1, y1, x2, y2);
-  let dx = (x2 - x1) / len; // Unit vector in x direction
-  let dy = (y2 - y1) / len; // Unit vector in y direction
-  let pos = 0; // Current position on line
+  let dx = (x2 - x1) / len;
+  let dy = (y2 - y1) / len;
+  let pos = 0;
 
-  // Generate apples along the line
   while (pos < len) {
-    // Random radius for apple (15–40 pixels)
     let r = random(15, 40);
-    // Compute apple center
     let cx = x1 + dx * (pos + r);
     let cy = y1 + dy * (pos + r);
 
-    // Check if beyond line end
     if (pos + r * 2 > len) {
       let remaining = len - pos;
-      r = remaining / 2; // Adjust radius to fit space
-      if (r < 3) break; // Stop if too small
+      r = remaining / 2;
+      if (r < 3) break;
       cx = x1 + dx * (pos + r);
       cy = y1 + dy * (pos + r);
     }
 
-    // Check overlap with existing apples
     let overlapping = false;
     for (let c of allCircles) {
-      // If too close and not near intersection, mark as overlapping
       if (dist(cx, cy, c.x, c.y) < (r + c.r) * 0.8 && !isNearIntersection(cx, cy)) {
         overlapping = true;
         break;
       }
     }
-    
-    while(overlapping){ //This technique is from https://www.w3schools.com/js/js_loop_while.asp
-      // decrease circle radius
-      r = r * 0.9; // decrease radius by 10%
-      
-      // if radius is too small, stop adding circles
+
+    while (overlapping) {
+      r = r * 0.9;
       if (r < 20) {
         overlapping = false;
         break;
       }
-      
-      // calculate new position of the circle
       cx = x1 + dx * (pos + r);
       cy = y1 + dy * (pos + r);
-      
-      // check if the circle overlaps
       overlapping = false;
       for (let existingCircle of allCircles) {
         let distance = dist(cx, cy, existingCircle.x, existingCircle.y);
         let minDistance = r + existingCircle.r;
-        
-        // if too close and not at intersection, mark as overlapping
         if (distance < minDistance * 0.9) {
-          // check if it is near an intersection
           let isIntersection = isNearIntersection(cx, cy);
           if (!isIntersection) {
             overlapping = true;
@@ -180,117 +138,78 @@ function drawCirclesOnLine(x1, y1, x2, y2, allCircles) {
           }
         }
       }
-      // update overlapping
     }
 
-    // If not overlapping, create new apple
     if (!overlapping) {
-      // Compute angle of the line
       let angle = atan2(dy, dx);
-      // Randomize color order
       let isRedFirst = random() > 0.5;
-      let color1 = isRedFirst ? [232, 80, 78] : [120, 161, 100]; // red or green
-      let color2 = isRedFirst ? [120, 161, 100] : [232, 80, 78]; // opposite
-
-      // Add to apple array
-      allCircles.push({x: cx, y: cy, r: r, angle: angle, color1, color2});
+      let color1 = isRedFirst ? [232, 80, 78] : [120, 161, 100];
+      let color2 = isRedFirst ? [120, 161, 100] : [232, 80, 78];
+      allCircles.push({
+        x: cx,
+        y: cy,
+        r: r,
+        angle: angle,
+        color1,
+        color2,
+        noiseSeedX: random(1000),
+        noiseSeedY: random(1000)
+      });
     }
-
-    // Move to next position (minus 2px for denser packing)
     pos += r * 2 - 2;
   }
 }
 
-// Check Proximity to Intersections
 function isNearIntersection(x, y) {
-  let threshold = 10; // Distance threshold for intersections
-  
-  // Define all key intersection coordinates
+  let threshold = 10;
   let intersections = [
-    // Key intersection points based on tree structure
-    {x: 0, y: 0},          // line 1 & 8 (bottom center)
-    {x: 0, y: -340},       // line 1 & 5 (top of trunk)
-    {x: -120, y: -250},    // line 2 & 3 (left main branch)
-    {x: 130, y: -250},     // line 2 & 4 (right main branch)
-    {x: -54, y: -340},     // line 5 & 6 (left small branch)
-    {x: 54, y: -340},      // line 5 & 7 (right small branch)
-    {x: -135, y: -430},    // line 3 & 9 (upper left)
-    {x: 130, y: -420},     // line 4 & 10 (upper right)
-    {x: 180, y: -421},     // line 10 & 11 (far right)
-    {x: -220, y: -410},    // line 9 & 12 (far left)
-    
-    // Important line endpoints
-    {x: -54, y: -380},     // line 6 endpoint
-    {x: 54, y: -370},      // line 7 endpoint
-    {x: 190, y: -520},     // line 11 endpoint
-    {x: -220, y: -440},    // line 12 endpoint
-    {x: -100, y: 0},       // line 8 left endpoint
-    {x: 100, y: 0}         // line 8 right endpoint
+    {x: 0, y: 0}, {x: 0, y: -340}, {x: -120, y: -250}, {x: 130, y: -250},
+    {x: -54, y: -340}, {x: 54, y: -340}, {x: -135, y: -430}, {x: 130, y: -420},
+    {x: 180, y: -421}, {x: -220, y: -410}, {x: -54, y: -380}, {x: 54, y: -370},
+    {x: 190, y: -520}, {x: -220, y: -440}, {x: -100, y: 0}, {x: 100, y: 0}
   ];
-  
-  // Check if point is within threshold of any intersection
   for (let p of intersections) {
     if (dist(x, y, p.x, p.y) < threshold) return true;
   }
   return false;
 }
 
-// Music Control
 function toggleSound() {
-  // Toggle play/pause
   if (sound.isPlaying()) {
-    sound.pause(); // Pause if playing
+    sound.pause();
   } else {
-    sound.loop(); // Loop if paused
+    sound.loop();
   }
 }
 
 function draw() {
-  // Redraw background
   drawBackground();
-
-  // Get low frequency audio energy for color effect
-  let spectrum = fft.analyze(); // Analyze audio spectrum
-  let lowEnergy = fft.getEnergy(20, 200); // Get 20–200Hz energy
-  let t = map(lowEnergy, 0, 255, 0, 1); // Map energy to 0–1
+  let spectrum = fft.analyze();
+  let lowEnergy = fft.getEnergy(20, 200);
+  let t = map(lowEnergy, 0, 255, 0, 1);
 
   push();
   translate(width / 2, height / 2 + 200);
   noStroke();
-  
 
+  for (let c of allCircles) {
+    let offsetX = noise(frameCount * noiseScale + c.noiseSeedX) * noiseAmplitude * 2 - noiseAmplitude;
+    let offsetY = noise(frameCount * noiseScale + c.noiseSeedY) * noiseAmplitude * 2 - noiseAmplitude;
 
-  
-  // Draw all apples with music-reactive color
-for (let i = 0; i < allCircles.length; i++) {
-  let c = allCircles[i];
-  
-  //  Noise offset: Over time + independent random value for each apple
-  let n = noise(frameCount * 0.01 + i * 10);
+    let from1 = color(...c.color1);
+    let to1 = color(...c.color2);
+    let lerped1 = lerpColor(from1, to1, t);
 
-  // Music and noise fusion, dynamic adjustment of apple radius
-  let scale = 1 + 0.2 * n + 0.2 * t; // 20% 噪声 + 20% 音乐动态
+    let from2 = color(...c.color2);
+    let to2 = color(...c.color1);
+    let lerped2 = lerpColor(from2, to2, t);
 
-  let r = c.r * scale; // Adjusted radius
+    fill(lerped1);
+    arc(c.x + offsetX, c.y + offsetY, c.r * 2, c.r * 2, c.angle, c.angle + PI);
+    fill(lerped2);
+    arc(c.x + offsetX, c.y + offsetY, c.r * 2, c.r * 2, c.angle + PI, c.angle + TWO_PI);
+  }
 
-  // Semicircle colour interpolation
-  let from1 = color(...c.color1);
-  let to1 = color(...c.color2);
-  let lerped1 = lerpColor(from1, to1, t);
-
-  let from2 = color(...c.color2);
-  let to2 = color(...c.color1);
-  let lerped2 = lerpColor(from2, to2, t);
-
-  fill(lerped1);
-  arc(c.x, c.y, r * 2, r * 2, c.angle, c.angle + PI);
-
-  fill(lerped2);
-  arc(c.x, c.y, r * 2, r * 2, c.angle + PI, c.angle + TWO_PI);
-}
-
-
-  // Draw tree branch lines
   stroke(234, 204, 70);
   strokeWeight(2);
   for (let lineSegment of lines) {
